@@ -1,0 +1,1261 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PDF আপলোড ও পেজ এডিটর</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Tiro+Bangla:ital@0;1&family=Noto+Sans+Bengali:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+  :root{
+    --paper: #FAF6EE;
+    --paper-line: #E4DCC8;
+    --ink: #24304A;
+    --ink-soft: #56617A;
+    --accent: #2E4374;
+    --accent-soft: #DDE3F0;
+    --danger: #B5493A;
+    --ok: #3D7A5C;
+    --radius: 14px;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--paper);
+    background-image: linear-gradient(var(--paper-line) 1px, transparent 1px);
+    background-size: 100% 34px;
+    color: var(--ink);
+    font-family: 'Noto Sans Bengali', sans-serif;
+    display: flex;
+    justify-content: center;
+    padding: 32px 18px 60px;
+  }
+
+  .sheet { width: 100%; max-width: 460px; }
+
+  .rule { margin-bottom: 30px; }
+
+  .rule .num {
+    display: block;
+    font-family: 'Tiro Bangla', serif;
+    font-style: italic;
+    font-size: 14px;
+    color: var(--ink-soft);
+    margin-bottom: 4px;
+  }
+
+  h1 {
+    font-family: 'Tiro Bangla', serif;
+    font-weight: 400;
+    font-size: 40px;
+    margin: 0;
+    color: var(--accent);
+    line-height: 1.25;
+    letter-spacing: 0.3px;
+  }
+
+  .flourish { width: 150px; height: 14px; margin-top: 8px; display: block; }
+
+  .storage-note {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 22px;
+    font-size: 12.5px;
+    color: var(--ink-soft);
+  }
+
+  .storage-note svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+  .dropzone {
+    border: 1.5px dashed #96A2C2;
+    border-radius: var(--radius);
+    background: #F3EFE2;
+    padding: 30px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color .15s ease, background .15s ease;
+  }
+
+  .dropzone:hover, .dropzone.drag { border-color: var(--accent); background: var(--accent-soft); }
+
+  .dropzone .icon {
+    width: 40px; height: 40px; margin: 0 auto 12px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%; background: var(--accent); color: #fff;
+  }
+
+  .dropzone .icon svg { width: 18px; height: 18px; }
+  .dropzone p { margin: 0; font-size: 16px; font-weight: 600; color: var(--ink); }
+  .dropzone span { display: block; margin-top: 6px; font-size: 13px; color: var(--ink-soft); }
+
+  input[type="file"] { display: none; }
+
+  .error { margin-top: 10px; font-size: 13px; color: var(--danger); display: none; }
+
+  .global-actions {
+    margin-top: 15px;
+    text-align: right;
+  }
+  .btn-danger {
+    background-color: var(--danger);
+    color: white;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 12.5px;
+    font-family: 'Noto Sans Bengali', sans-serif;
+    font-weight: 600;
+  }
+  .btn-danger:hover { opacity: 0.9; }
+
+  #fileList { list-style: none; margin: 26px 0 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+
+  .file-card {
+    background: #fff;
+    border: 1px solid var(--paper-line);
+    border-radius: var(--radius);
+    box-shadow: 0 1px 0 rgba(36,48,74,0.03);
+    overflow: hidden;
+  }
+
+  .file-row { display: flex; align-items: center; gap: 12px; padding: 14px 16px; }
+
+  .badge {
+    flex-shrink: 0; width: 34px; height: 34px; border-radius: 50%;
+    background: var(--ok); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700;
+  }
+
+  .meta { flex: 1; min-width: 0; }
+  .name { font-size: 14.5px; font-weight: 600; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .size { font-size: 12.5px; color: var(--ink-soft); margin-top: 1px; }
+
+  .icon-btn {
+    flex-shrink: 0; border: none; background: transparent; color: var(--ink-soft);
+    font-size: 20px; line-height: 1; cursor: pointer; padding: 4px 6px;
+  }
+  .icon-btn:hover { color: var(--danger); }
+
+  .actions-row { display: flex; gap: 8px; padding: 0 16px 14px; flex-direction: column; }
+
+  .action-btn {
+    width: 100%;
+    border: 1px solid var(--paper-line);
+    background: #FBF9F3;
+    color: var(--accent);
+    font-family: 'Noto Sans Bengali', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: 999px;
+    padding: 10px 10px;
+    cursor: pointer;
+    transition: background .15s ease;
+    text-align: center;
+  }
+  .action-btn:hover { background: var(--accent-soft); }
+  .action-btn.open { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  .action-btn.skip-btn {
+    background: #EFEADF;
+    color: var(--ink);
+  }
+  .action-btn.skip-btn:hover { background: #dcd4c3; }
+
+  .panel { display: none; border-top: 1px solid var(--paper-line); background: #FBF9F3; padding: 16px; }
+  .panel.open { display: block; }
+
+  .panel-tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 14px;
+    background: #EFEADF;
+    padding: 4px;
+    border-radius: 10px;
+  }
+  .tab-btn {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-family: 'Noto Sans Bengali', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ink-soft);
+    padding: 7px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all .2s;
+  }
+  .tab-btn.active {
+    background: #fff;
+    color: var(--accent);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+
+  .panel-label { font-size: 13px; color: var(--ink-soft); margin-bottom: 8px; }
+
+  /* লেআউট টগল বাটন স্টাইল */
+  .layout-toggle-btn {
+    width: 100%;
+    background: #EFEADF;
+    border: 1px solid #DCE3F0;
+    color: var(--accent);
+    font-family: 'Noto Sans Bengali', sans-serif;
+    font-size: 12.5px;
+    font-weight: 600;
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-bottom: 12px;
+    text-align: center;
+    transition: background 0.15s ease;
+  }
+  .layout-toggle-btn:hover {
+    background: var(--accent-soft);
+  }
+
+  .number-box {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .number-box input, .number-box select {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #C9D0DE;
+    border-radius: 8px;
+    font-family: 'Noto Sans Bengali', sans-serif;
+    font-size: 14px;
+    outline: none;
+    background: #fff;
+  }
+  .number-box input:focus, .number-box select:focus { border-color: var(--accent); }
+  .number-hint { font-size: 11.5px; color: var(--ink-soft); }
+
+  .loading { font-size: 13px; color: var(--ink-soft); padding: 20px 0; text-align: center; }
+
+  .page-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+    max-height: 280px;
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+  
+  /* ১টি করে পেজ দেখানোর ক্লাস */
+  .page-grid.single-col {
+    grid-template-columns: 1fr;
+  }
+
+  .page-thumb {
+    position: relative;
+    border: 1px solid #C9D0DE;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #fff;
+  }
+
+  .page-thumb img { display: block; width: 100%; height: auto; }
+
+  .page-thumb .trash {
+    position: absolute;
+    top: 6px; right: 6px;
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.95);
+    border: none;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--danger);
+    cursor: pointer;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+  }
+  .page-thumb .trash svg { width: 14px; height: 14px; }
+
+  .page-thumb .pnum {
+    position: absolute;
+    bottom: 6px; left: 6px;
+    background: rgba(36,48,74,0.75);
+    color: #fff;
+    font-size: 11px;
+    padding: 2px 7px;
+    border-radius: 999px;
+  }
+
+  .btn-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .btn {
+    display: block;
+    width: 100%;
+    border: none;
+    border-radius: 999px;
+    padding: 12px;
+    font-family: 'Noto Sans Bengali', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-secondary { background: #E4DCC8; color: var(--ink); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .progress-container {
+    display: none;
+    margin-top: 10px;
+    background: #EFEADF;
+    border-radius: 10px;
+    padding: 10px;
+    text-align: center;
+  }
+  .progress-container.active {
+    display: block;
+  }
+  .progress-bar-bg {
+    width: 100%;
+    background: #DDE3F0;
+    height: 8px;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 6px;
+  }
+  .progress-bar-fill {
+    width: 0%;
+    height: 100%;
+    background: var(--accent);
+    transition: width 0.1s linear;
+  }
+  .progress-text {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--accent);
+  }
+
+  .next-process-view {
+    background: #fff;
+    border: 1px solid var(--paper-line);
+    border-radius: var(--radius);
+    padding: 18px;
+    margin-top: 12px;
+  }
+  .checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink);
+    cursor: pointer;
+    margin-bottom: 14px;
+  }
+  .checkbox-label input[type="checkbox"] {
+    accent-color: var(--ok);
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+  }
+
+  .setting-group {
+    margin-bottom: 12px;
+  }
+  .setting-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 4px;
+  }
+  .setting-group select {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #C9D0DE;
+    border-radius: 8px;
+    font-family: 'Noto Sans Bengali', sans-serif;
+    font-size: 13.5px;
+    background: #fff;
+    outline: none;
+  }
+</style>
+</head>
+<body>
+
+<div class="sheet">
+
+  <div class="rule">
+    <span class="num">১</span>
+    <h1>স্বাগতম জানাই</h1>
+    <svg class="flourish" viewBox="0 0 150 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M2 8C25 2 40 12 63 6C86 0 100 11 123 5C132 2.5 140 4 148 7" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+  </div>
+
+  <div class="storage-note">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 18h6"/></svg>
+    <span>ফাইল আপনার ফোনেই থাকবে — কোথাও আপলোড হয় না</span>
+  </div>
+
+  <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="PDF ফাইল আপলোড করুন">
+    <div class="icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/>
+      </svg>
+    </div>
+    <p>আপনার ফাইলটি Upload করুন</p>
+    <span>(Only PDF file)</span>
+  </div>
+  <input type="file" id="fileInput" accept="application/pdf,.pdf" multiple>
+  <div class="error" id="errorMsg">শুধু PDF ফাইল গ্রহণযোগ্য।</div>
+
+  <div class="global-actions">
+    <button id="clearDataBtn" class="btn-danger">সব ডেটা ক্লিয়ার করুন (Reset)</button>
+  </div>
+
+  <ul id="fileList"></ul>
+
+</div>
+
+<script>
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+  const DB_NAME = 'pdfAppStorage';
+  const STORE = 'files';
+  let dbPromise = new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, 1);
+    req.onupgradeneeded = () => req.result.createObjectStore(STORE, { keyPath: 'id' });
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+
+  async function idbPut(record) {
+    const db = await dbPromise;
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE, 'readwrite');
+      tx.objectStore(STORE).put(record);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+  async function idbDelete(id) {
+    const db = await dbPromise;
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE, 'readwrite');
+      tx.objectStore(STORE).delete(id);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+  async function idbGetAll() {
+    const db = await dbPromise;
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE, 'readonly');
+      const req = tx.objectStore(STORE).getAll();
+      req.onsuccess = () => resolve(req.result || []);
+      req.onerror = () => reject(req.error);
+    });
+  }
+  
+  async function idbClearAll() {
+    const db = await dbPromise;
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE, 'readwrite');
+      tx.objectStore(STORE).clear();
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+
+  const dropzone  = document.getElementById('dropzone');
+  const fileInput = document.getElementById('fileInput');
+  const fileList  = document.getElementById('fileList');
+  const errorMsg  = document.getElementById('errorMsg');
+  const clearDataBtn = document.getElementById('clearDataBtn');
+
+  let entries = [];
+
+  init();
+
+  async function init() {
+    const stored = await idbGetAll();
+    for (const rec of stored) {
+      const pageCount = await getPageCount(rec.bytes);
+      entries.push(makeEntry(rec.id, rec.name, rec.bytes, pageCount));
+    }
+    render();
+  }
+
+  function makeEntry(id, name, bytes, pageCount) {
+    return {
+      id, name, size: bytes.byteLength, bytes, pageCount,
+      remainingPages: Array.from({ length: pageCount }, (_, i) => i),
+      thumbnails: new Map(),
+      thumbLoading: false,
+      thumbProgress: 0,
+      singleColumnView: false, // ১টি করে পেজ দেখার স্টেট
+      panelOpen: false,
+      panelType: null,
+      deleteMode: 'visual',
+      invertPdf: false,
+      pagesPerSheet: 1,
+      pageSize: 'A4',
+      orientation: 'portrait',
+      pageBorder: 'yes',
+      pageSpacing: '0.5mm',
+      imageQuality: 'high',
+      addPageNumbers: false,
+      pageNumberStyle: 'numeric',
+      pageNumberColor: 'black',
+      pageNumberWeight: 'normal',
+      progress: 0,
+      isProcessing: false
+    };
+  }
+
+  dropzone.addEventListener('click', () => fileInput.click());
+  dropzone.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') fileInput.click(); });
+  ['dragenter', 'dragover'].forEach(evt => dropzone.addEventListener(evt, (e) => { e.preventDefault(); dropzone.classList.add('drag'); }));
+  ['dragleave', 'drop'].forEach(evt => dropzone.addEventListener(evt, (e) => { e.preventDefault(); dropzone.classList.remove('drag'); }));
+  dropzone.addEventListener('drop', (e) => handleFiles(e.dataTransfer.files));
+  fileInput.addEventListener('change', (e) => { handleFiles(e.target.files); fileInput.value = ''; });
+
+  clearDataBtn.addEventListener('click', async () => {
+    if (confirm("আপনি কি নিশ্চিতভাবে সমস্ত সংরক্ষিত ডেটা ও ক্যাশ মুছে ফেলতে চান? এটি শুধুমাত্র অ্যাপের মেমোরি খালি করবে।")) {
+      await idbClearAll();
+      entries = [];
+      render();
+      alert("সমস্ত ডেটা সফলভাবে রিসেট করা হয়েছে।");
+    }
+  });
+
+  async function handleFiles(fileListInput) {
+    let rejected = false;
+    for (const f of Array.from(fileListInput)) {
+      const isPdf = f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf');
+      if (!isPdf) { rejected = true; continue; }
+      const bytes = await f.arrayBuffer();
+      const pageCount = await getPageCount(bytes);
+      const id = 'f_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+      await idbPut({ id, name: f.name, bytes });
+      entries.push(makeEntry(id, f.name, bytes, pageCount));
+    }
+    errorMsg.style.display = rejected ? 'block' : 'none';
+    render();
+  }
+
+  async function getPageCount(bytes) {
+    try {
+      const doc = await PDFLib.PDFDocument.load(bytes.slice(0));
+      return doc.getPageCount();
+    } catch (e) { return 0; }
+  }
+
+  function formatSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  }
+
+  async function removeFile(id) {
+    entries = entries.filter(e => e.id !== id);
+    await idbDelete(id);
+    render();
+  }
+
+  async function togglePanel(id, type) {
+    const e = entries.find(x => x.id === id);
+    if (e.panelOpen && e.panelType === type) {
+      e.panelOpen = false;
+      e.panelType = null;
+    } else {
+      e.panelOpen = true;
+      e.panelType = type;
+      if (type === 'delete' && e.thumbnails.size === 0 && !e.thumbLoading) {
+        e.thumbLoading = true;
+        e.thumbProgress = 0;
+        render();
+        await generateThumbnails(e);
+        e.thumbLoading = false;
+      }
+    }
+    render();
+  }
+
+  function setDeleteMode(id, mode) {
+    const e = entries.find(x => x.id === id);
+    e.deleteMode = mode;
+    render();
+  }
+
+  // ১টি করে পেজ দেখানোর অপশন টগল করার ফাংশন
+  function toggleSingleColumn(id) {
+    const e = entries.find(x => x.id === id);
+    if (e) {
+      e.singleColumnView = !e.singleColumnView;
+      render();
+    }
+  }
+
+  async function generateThumbnails(e) {
+    try {
+      const copy = new Uint8Array(e.bytes.slice(0));
+      const pdf = await pdfjsLib.getDocument({ data: copy }).promise;
+      const total = e.pageCount;
+      for (let i = 0; i < total; i++) {
+        const page = await pdf.getPage(i + 1);
+        const baseViewport = page.getViewport({ scale: 1 });
+        const scale = 260 / baseViewport.width;
+        const viewport = page.getViewport({ scale });
+        const canvas = document.createElement('canvas');
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        const ctx = canvas.getContext('2d');
+        await page.render({ canvasContext: ctx, viewport }).promise;
+        e.thumbnails.set(i, canvas.toDataURL('image/jpeg', 0.85));
+        
+        e.thumbProgress = Math.round(((i + 1) / total) * 100);
+        render();
+      }
+    } catch (err) {
+      console.error('thumbnail render failed', err);
+    }
+  }
+
+  function deletePage(id, pageIndex) {
+    const e = entries.find(x => x.id === id);
+    if (e.remainingPages.length <= 1) { alert('অন্তত একটি পেজ থাকতে হবে।'); return; }
+    e.remainingPages = e.remainingPages.filter(p => p !== pageIndex);
+    render();
+  }
+
+  function deleteByPageNumbers(id, inputStr) {
+    const e = entries.find(x => x.id === id);
+    if (!inputStr.trim()) { alert('দয়া করে পেজ নম্বর দিন।'); return; }
+
+    const pagesToDelete = new Set();
+    const parts = inputStr.split(',');
+
+    for (const part of parts) {
+      const trimmed = part.trim();
+      if (trimmed.includes('-')) {
+        const [start, end] = trimmed.split('-').map(n => parseInt(n, 10));
+        if (!isNaN(start) && !isNaN(end)) {
+          for (let i = Math.min(start, end); i <= Math.max(start, end); i++) {
+            pagesToDelete.add(i - 1);
+          }
+        }
+      } else {
+        const num = parseInt(trimmed, 10);
+        if (!isNaN(num)) {
+          pagesToDelete.add(num - 1);
+        }
+      }
+    }
+
+    const newRemaining = e.remainingPages.filter(p => !pagesToDelete.has(p));
+    if (newRemaining.length === 0) {
+      alert('সব পেজ ডিলিট করা যাবে না, অন্তত একটি পেজ রাখতে হবে।');
+      return;
+    }
+
+    e.remainingPages = newRemaining;
+    render();
+    alert('নির্বাচিত পেজগুলো বাদ দেওয়া হয়েছে।');
+  }
+
+  const PAGE_NUMBER_COLORS = {
+    black:  [0, 0, 0],
+    white:  [1, 1, 1],
+    blue:   [0.18, 0.26, 0.45],
+    green:  [0.18, 0.49, 0.20],
+    yellow: [0.98, 0.65, 0.15],
+    purple: [0.42, 0.11, 0.60],
+    sergel: [0.95, 0.45, 0.10]
+  };
+
+  function toAlphaLabel(n) {
+    let s = '';
+    while (n > 0) {
+      const rem = (n - 1) % 26;
+      s = String.fromCharCode(97 + rem) + s;
+      n = Math.floor((n - 1) / 26);
+    }
+    return s;
+  }
+
+  function toBengaliNumber(n) {
+    const bengaliDigits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
+    return String(n).split('').map(digit => {
+      const num = parseInt(digit, 10);
+      return !isNaN(num) ? bengaliDigits[num] : digit;
+    }).join('');
+  }
+
+  function getDimensions(sizeName, orientation) {
+    let dims = { width: 595.28, height: 841.89 };
+    if (sizeName === 'A4') {
+      dims = { width: 595.28, height: 841.89 };
+    } else if (sizeName === 'Letter') {
+      dims = { width: 612.0, height: 792.0 };
+    } else if (sizeName === 'Legal') {
+      dims = { width: 612.0, height: 1008.0 };
+    }
+    if (orientation === 'landscape') {
+      return { width: dims.height, height: dims.width };
+    }
+    return dims;
+  }
+
+  async function processAndSaveFile(id) {
+    const e = entries.find(x => x.id === id);
+    e.isProcessing = true;
+    e.progress = 0;
+    render();
+
+    try {
+      const newDoc = await PDFLib.PDFDocument.create();
+
+      const copy = new Uint8Array(e.bytes.slice(0));
+      const pdf = await pdfjsLib.getDocument({ data: copy }).promise;
+
+      const pps = parseInt(e.pagesPerSheet, 10);
+      const dim = getDimensions(e.pageSize, e.orientation);
+
+      const mmVal = parseFloat(e.pageSpacing) || 0.5;
+      const gap = mmVal * 2.83;
+
+      const renderScale = (e.imageQuality === 'high') ? 2.5 : 1.5;
+      const jpegQuality = (e.imageQuality === 'high') ? 1.0 : 0.85;
+
+      let numberFont = null;
+      if (e.addPageNumbers) {
+        if (e.pageNumberWeight === 'bold') {
+          numberFont = await newDoc.embedFont(PDFLib.StandardFonts.HelveticaBold);
+        } else {
+          numberFont = await newDoc.embedFont(PDFLib.StandardFonts.Helvetica);
+        }
+      }
+      
+      let pageNumCounter = 1;
+
+      function stampPageNumber(pageObj) {
+        if (!e.addPageNumbers || !numberFont) return;
+        let label = String(pageNumCounter);
+        if (e.pageNumberStyle === 'alpha') {
+          label = toAlphaLabel(pageNumCounter);
+        } else if (e.pageNumberStyle === 'bengali') {
+          label = toBengaliNumber(pageNumCounter);
+        }
+
+        const [r, g, b] = PAGE_NUMBER_COLORS[e.pageNumberColor] || PAGE_NUMBER_COLORS.black;
+        const fontSize = 11;
+        const textWidth = numberFont.widthOfTextAtSize(label, fontSize);
+        pageObj.drawText(label, {
+          x: (dim.width - textWidth) / 2,
+          y: 16,
+          size: fontSize,
+          font: numberFont,
+          color: PDFLib.rgb(r, g, b)
+        });
+        pageNumCounter++;
+      }
+
+      const totalSteps = (pps === 1) ? e.remainingPages.length : Math.ceil(e.remainingPages.length / pps);
+      let currentStep = 0;
+
+      if (pps === 1) {
+        for (const pageIdx of e.remainingPages) {
+          const page = await pdf.getPage(pageIdx + 1);
+          const viewport = page.getViewport({ scale: renderScale });
+          const canvas = document.createElement('canvas');
+          canvas.width = viewport.width;
+          canvas.height = viewport.height;
+          const ctx = canvas.getContext('2d');
+
+          await page.render({ canvasContext: ctx, viewport }).promise;
+
+          if (e.invertPdf) {
+            const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imgData.data;
+            for (let i = 0; i < data.length; i += 4) {
+              data[i]     = 255 - data[i];
+              data[i + 1] = 255 - data[i + 1];
+              data[i + 2] = 255 - data[i + 2];
+            }
+            ctx.putImageData(imgData, 0, 0);
+          }
+
+          if (e.pageBorder === 'yes') {
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 4 * (renderScale / 1.5);
+            ctx.strokeRect(0, 0, canvas.width, canvas.height);
+          }
+
+          const jpgUrl = canvas.toDataURL('image/jpeg', jpegQuality);
+          const jpgBytes = await fetch(jpgUrl).then(res => res.arrayBuffer());
+          const embeddedImage = await newDoc.embedJpg(jpgBytes);
+
+          const newPage = newDoc.addPage([dim.width, dim.height]);
+          const imgAspect = viewport.width / viewport.height;
+          let drawW = dim.width - 40;
+          let drawH = drawW / imgAspect;
+          if (drawH > dim.height - 40) {
+            drawH = dim.height - 40;
+            drawW = drawH * imgAspect;
+          }
+          const drawX = (dim.width - drawW) / 2;
+          const drawY = (dim.height - drawH) / 2;
+
+          newPage.drawImage(embeddedImage, {
+            x: drawX,
+            y: drawY,
+            width: drawW,
+            height: drawH,
+          });
+          stampPageNumber(newPage);
+
+          currentStep++;
+          e.progress = Math.min(Math.floor((currentStep / totalSteps) * 90), 90);
+          render();
+        }
+      } else {
+        let chunks = [];
+        for (let i = 0; i < e.remainingPages.length; i += pps) {
+          chunks.push(e.remainingPages.slice(i, i + pps));
+        }
+
+        for (const chunk of chunks) {
+          const sheetCanvas = document.createElement('canvas');
+          
+          if (e.orientation === 'landscape') {
+            sheetCanvas.width = 3300;
+            sheetCanvas.height = 2400;
+          } else {
+            sheetCanvas.width = 2400;
+            sheetCanvas.height = 3300;
+          }
+
+          const sCtx = sheetCanvas.getContext('2d');
+
+          sCtx.fillStyle = '#FFFFFF';
+          sCtx.fillRect(0, 0, sheetCanvas.width, sheetCanvas.height);
+
+          let cols = 1, rows = 1;
+          if (pps === 2) { 
+            cols = (e.orientation === 'landscape') ? 2 : 1; 
+            rows = (e.orientation === 'landscape') ? 1 : 2; 
+          }
+          else if (pps === 3) {
+            cols = (e.orientation === 'landscape') ? 3 : 1;
+            rows = (e.orientation === 'landscape') ? 1 : 3;
+          }
+          else if (pps === 4) { 
+            cols = 2; 
+            rows = 2; 
+          }
+          else if (pps === 6) { 
+            cols = (e.orientation === 'landscape') ? 3 : 2; 
+            rows = (e.orientation === 'landscape') ? 2 : 3; 
+          }
+
+          const cellW = sheetCanvas.width / cols;
+          const cellH = sheetCanvas.height / rows;
+          const scaledGap = gap * (sheetCanvas.width / 595.28);
+
+          for (let idx = 0; idx < chunk.length; idx++) {
+            const pageIdx = chunk[idx];
+            const page = await pdf.getPage(pageIdx + 1);
+            const viewport = page.getViewport({ scale: renderScale });
+            const canvas = document.createElement('canvas');
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            const ctx = canvas.getContext('2d');
+            await page.render({ canvasContext: ctx, viewport }).promise;
+
+            if (e.invertPdf) {
+              const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+              const data = imgData.data;
+              for (let i = 0; i < data.length; i += 4) {
+                data[i]     = 255 - data[i];
+                data[i + 1] = 255 - data[i + 1];
+                data[i + 2] = 255 - data[i + 2];
+              }
+              ctx.putImageData(imgData, 0, 0);
+            }
+
+            if (e.pageBorder === 'yes') {
+              ctx.strokeStyle = '#000000';
+              ctx.lineWidth = 6;
+              ctx.strokeRect(0, 0, canvas.width, canvas.height);
+            }
+
+            const cCol = idx % cols;
+            const cRow = Math.floor(idx / cols);
+            const posX = cCol * cellW + scaledGap;
+            const posY = cRow * cellH + scaledGap;
+            const availW = cellW - (scaledGap * 2);
+            const availH = cellH - (scaledGap * 2);
+
+            const imgAspect = canvas.width / canvas.height;
+            let renderW = availW;
+            let renderH = renderW / imgAspect;
+            if (renderH > availH) {
+              renderH = availH;
+              renderW = renderH * imgAspect;
+            }
+
+            sCtx.drawImage(canvas, posX + (availW - renderW)/2, posY + (availH - renderH)/2, renderW, renderH);
+          }
+
+          const sheetUrl = sheetCanvas.toDataURL('image/jpeg', jpegQuality);
+          const sheetBytes = await fetch(sheetUrl).then(res => res.arrayBuffer());
+          const embeddedSheet = await newDoc.embedJpg(sheetBytes);
+
+          const newPage = newDoc.addPage([dim.width, dim.height]);
+          newPage.drawImage(embeddedSheet, {
+            x: 0,
+            y: 0,
+            width: dim.width,
+            height: dim.height,
+          });
+          stampPageNumber(newPage);
+
+          currentStep++;
+          e.progress = Math.min(Math.floor((currentStep / totalSteps) * 90), 90);
+          render();
+        }
+      }
+
+      e.progress = 95;
+      render();
+
+      let newBytes = await newDoc.save();
+
+      e.bytes = newBytes.buffer.slice(newBytes.byteOffset, newBytes.byteOffset + newBytes.byteLength);
+      e.size = e.bytes.byteLength;
+      e.pageCount = newDoc.getPageCount();
+      e.remainingPages = Array.from({ length: e.pageCount }, (_, i) => i);
+      e.thumbnails = new Map();
+      await idbPut({ id: e.id, name: e.name, bytes: e.bytes });
+
+      e.progress = 100;
+      render();
+
+      setTimeout(() => {
+        e.isProcessing = false;
+        e.progress = 0;
+        render();
+      }, 600);
+
+      return { newBytes, fileName: e.name };
+    } catch (err) {
+      console.error("PDF Processing Error:", err);
+      alert("পিডিএফ প্রসেস করার সময় একটি সমস্যা হয়েছে।");
+      e.isProcessing = false;
+      e.progress = 0;
+      render();
+      throw err;
+    }
+  }
+
+  async function printPdf(id) {
+    try {
+      const res = await processAndSaveFile(id);
+      const blob = new Blob([res.newBytes], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = res.fileName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e) {}
+  }
+
+  function toggleInvert(id, checked) {
+    const e = entries.find(x => x.id === id);
+    e.invertPdf = checked;
+  }
+
+  function toggleAddPageNumbers(id, checked) {
+    const e = entries.find(x => x.id === id);
+    e.addPageNumbers = checked;
+    render();
+  }
+
+  function updateSetting(id, field, val) {
+    const e = entries.find(x => x.id === id);
+    if (e) {
+      e[field] = val;
+      render();
+    }
+  }
+
+  function render() {
+    fileList.innerHTML = '';
+
+    entries.forEach((e) => {
+      const li = document.createElement('li');
+      li.className = 'file-card';
+
+      let panelBody = '';
+      if (e.panelOpen && e.panelType === 'delete') {
+        if (e.thumbLoading) {
+          panelBody = `
+            <div class="loading">পেজগুলোর প্রিভিউ লোড হচ্ছে…</div>
+            <div class="progress-container active" style="margin-top: 10px;">
+              <div class="progress-bar-bg">
+                <div class="progress-bar-fill" style="width: ${e.thumbProgress}%;"></div>
+              </div>
+              <div class="progress-text">${e.thumbProgress}% লোড সম্পন্ন</div>
+            </div>
+          `;
+        } else {
+          const thumbs = e.remainingPages.map(pageIndex => `
+            <div class="page-thumb" data-page="${pageIndex}">
+              <img src="${e.thumbnails.get(pageIndex) || ''}" alt="পেজ ${pageIndex + 1}">
+              <button class="trash" data-trash="${pageIndex}" aria-label="এই পেজ মুছুন">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                </svg>
+              </button>
+              <span class="pnum">${pageIndex + 1}</span>
+            </div>
+          `).join('');
+
+          const visualContent = `
+            <div class="panel-label">যে পেজ মুছতে চান, তার ডাস্টবিন আইকনে ট্যাপ করুন</div>
+            <button class="layout-toggle-btn" data-toggle-single>
+              ${e.singleColumnView ? '২ টি করে পেজ দেখান' : '১ টি করে পেজ দেখান 😊'}
+            </button>
+            <div class="page-grid ${e.singleColumnView ? 'single-col' : ''}">${thumbs}</div>
+          `;
+
+          const numberContent = `
+            <div class="number-box">
+              <div class="panel-label" style="margin-bottom:0;">যে পেজগুলো ডিলিট করতে চান তার নম্বর লিখুন:</div>
+              <input type="text" id="numInput_${e.id}" placeholder="যেমন: 2, 5, 7-10">
+              <span class="number-hint">কমা (,) দিয়ে বা রেঞ্জ (-) দিয়ে লিখতে পারেন।</span>
+              <button class="btn btn-primary" data-apply-num style="margin-top:4px;">পেজগুলো বাদ দিন</button>
+            </div>
+          `;
+
+          panelBody = `
+            <div class="panel-tabs">
+              <button class="tab-btn ${e.deleteMode === 'visual' ? 'active' : ''}" data-mode="visual">থাম্বনেইল দেখে</button>
+              <button class="tab-btn ${e.deleteMode === 'number' ? 'active' : ''}" data-mode="number">নম্বর লিখে</button>
+            </div>
+            ${e.deleteMode === 'visual' ? visualContent : numberContent}
+            <div class="btn-group" style="margin-top: 16px;">
+              <button class="btn btn-primary" data-print ${e.isProcessing ? 'disabled' : ''}>${e.isProcessing ? 'প্রসেস হচ্ছে...' : 'এখন পিডিএফ প্রিন্ট করুন'}</button>
+              <button class="action-btn skip-btn" data-toggle-skip style="margin-top: 4px; border-radius: 999px; padding: 12px; font-size: 14px;">Next process</button>
+              <div class="progress-container ${e.isProcessing ? 'active' : ''}">
+                <div class="progress-bar-bg">
+                  <div class="progress-bar-fill" style="width: ${e.progress}%;"></div>
+                </div>
+                <div class="progress-text">${e.progress}% প্রসেস সম্পন্ন</div>
+              </div>
+            </div>
+          `;
+        }
+      } else if (e.panelOpen && e.panelType === 'settings') {
+        panelBody = `
+          <div class="next-process-view" style="margin-top:0; border:none; padding:0;">
+            <div class="panel-label" style="font-weight:600; color:var(--ink); margin-bottom:10px;">পেজ সেটআপ ও ইনভার্ট সেটিংস:</div>
+
+            <label class="checkbox-label" style="margin-bottom:16px;">
+              <input type="checkbox" id="invert_${e.id}" ${e.invertPdf ? 'checked' : ''} data-invert>
+              PDF টি ইনভার্ট করতে চান? (সাদা-কালো পরিবর্তন)
+            </label>
+
+            <label class="checkbox-label">
+              <input type="checkbox" id="pagenum_${e.id}" ${e.addPageNumbers ? 'checked' : ''} data-pagenum>
+              পৃষ্ঠার নম্বর দিতে চান?
+            </label>
+
+            ${e.addPageNumbers ? `
+            <div class="setting-group">
+              <label>কি রকম নম্বর?</label>
+              <select data-setting="pageNumberStyle" data-id="${e.id}">
+                <option value="numeric" ${e.pageNumberStyle === 'numeric' ? 'selected' : ''}>1, 2, 3 …</option>
+                <option value="bengali" ${e.pageNumberStyle === 'bengali' ? 'selected' : ''}>১, ২, ৩ … (বাংলা)</option>
+                <option value="alpha" ${e.pageNumberStyle === 'alpha' ? 'selected' : ''}>a, b, c …</option>
+              </select>
+            </div>
+            
+            <div class="setting-group">
+              <label>নম্বরের স্টাইল (মোটা বা সাধারণ)</label>
+              <select data-setting="pageNumberWeight" data-id="${e.id}">
+                <option value="normal" ${e.pageNumberWeight === 'normal' ? 'selected' : ''}>সাধারণ (Normal)</option>
+                <option value="bold" ${e.pageNumberWeight === 'bold' ? 'selected' : ''}>বোল্ড/মোটা (Bold)</option>
+              </select>
+            </div>
+
+            <div class="setting-group">
+              <label>নম্বরের কালার</label>
+              <select data-setting="pageNumberColor" data-id="${e.id}">
+                <option value="black" ${e.pageNumberColor === 'black' ? 'selected' : ''}>কালো</option>
+                <option value="white" ${e.pageNumberColor === 'white' ? 'selected' : ''}>সাদা</option>
+                <option value="blue" ${e.pageNumberColor === 'blue' ? 'selected' : ''}>নীল</option>
+                <option value="green" ${e.pageNumberColor === 'green' ? 'selected' : ''}>সবুজ</option>
+                <option value="yellow" ${e.pageNumberColor === 'yellow' ? 'selected' : ''}>হলুদ</option>
+                <option value="purple" ${e.pageNumberColor === 'purple' ? 'selected' : ''}>বেগুনি</option>
+                <option value="sergel" ${e.pageNumberColor === 'sergel' ? 'selected' : ''}>সেরজেল</option>
+              </select>
+            </div>
+            ` : ''}
+
+            <div class="setting-group">
+              <label>টেক্সট ও ছবির কোয়ালিটি (Quality)</label>
+              <select data-setting="imageQuality" data-id="${e.id}">
+                <option value="high" ${e.imageQuality === 'high' ? 'selected' : ''}>সর্বোচ্চ স্পষ্টতা (High Quality)</option>
+                <option value="normal" ${e.imageQuality === 'normal' ? 'selected' : ''}>সাধারণ (Normal)</option>
+              </select>
+            </div>
+
+            <div class="setting-group">
+              <label>১ পেজে কতটি পেজ থাকবে?</label>
+              <select data-setting="pagesPerSheet" data-id="${e.id}">
+                <option value="1" ${e.pagesPerSheet == 1 ? 'selected' : ''}>১টি</option>
+                <option value="2" ${e.pagesPerSheet == 2 ? 'selected' : ''}>২টি</option>
+                <option value="3" ${e.pagesPerSheet == 3 ? 'selected' : ''}>৩টি</option>
+                <option value="4" ${e.pagesPerSheet == 4 ? 'selected' : ''}>৪টি</option>
+                <option value="6" ${e.pagesPerSheet == 6 ? 'selected' : ''}>৬টি</option>
+              </select>
+            </div>
+
+            ${e.pagesPerSheet > 1 ? `
+            <div class="setting-group">
+              <label>পেজগুলোর মধ্যকার দূরত্ব (Spacing)</label>
+              <select data-setting="pageSpacing" data-id="${e.id}">
+                <option value="0.5mm" ${e.pageSpacing === '0.5mm' ? 'selected' : ''}>0.5 mm (ন্যূনতম ফাঁকা)</option>
+                <option value="1mm" ${e.pageSpacing === '1mm' ? 'selected' : ''}>1 mm</option>
+                <option value="2mm" ${e.pageSpacing === '2mm' ? 'selected' : ''}>2 mm</option>
+                <option value="3mm" ${e.pageSpacing === '3mm' ? 'selected' : ''}>3 mm</option>
+                <option value="4mm" ${e.pageSpacing === '4mm' ? 'selected' : ''}>4 mm</option>
+              </select>
+            </div>
+            ` : ''}
+
+            <div class="setting-group">
+              <label>পেজের সাইজ (Page Size)</label>
+              <select data-setting="pageSize" data-id="${e.id}">
+                <option value="A4" ${e.pageSize === 'A4' ? 'selected' : ''}>A4</option>
+                <option value="Letter" ${e.pageSize === 'Letter' ? 'selected' : ''}>Letter</option>
+                <option value="Legal" ${e.pageSize === 'Legal' ? 'selected' : ''}>Legal</option>
+              </select>
+            </div>
+
+            <div class="setting-group">
+              <label>পেজের ওরিয়েন্টেশন (Orientation)</label>
+              <select data-setting="orientation" data-id="${e.id}">
+                <option value="portrait" ${e.orientation === 'portrait' ? 'selected' : ''}>Portrait</option>
+                <option value="landscape" ${e.orientation === 'landscape' ? 'selected' : ''}>Landscape</option>
+              </select>
+            </div>
+
+            <div class="setting-group" style="margin-bottom:16px;">
+              <label>চারপাশে বর্ডার রাখবেন কি?</label>
+              <select data-setting="pageBorder" data-id="${e.id}">
+                <option value="yes" ${e.pageBorder === 'yes' ? 'selected' : ''}>হ্যাঁ</option>
+                <option value="no" ${e.pageBorder === 'no' ? 'selected' : ''}>না</option>
+              </select>
+            </div>
+
+            <div class="btn-group">
+              <button class="btn btn-primary" data-print ${e.isProcessing ? 'disabled' : ''}>${e.isProcessing ? 'প্রসেস হচ্ছে...' : 'ডাউনলোড / প্রিন্ট করুন'}</button>
+              <div class="progress-container ${e.isProcessing ? 'active' : ''}">
+                <div class="progress-bar-bg">
+                  <div class="progress-bar-fill" style="width: ${e.progress}%;"></div>
+                </div>
+                <div class="progress-text">${e.progress}% প্রসেস সম্পন্ন</div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      li.innerHTML = `
+        <div class="file-row">
+          <div class="badge">PDF</div>
+        </div>
+        <div class="file-row" style="padding-top:0;">
+          <div class="meta">
+            <div class="name">${e.name}</div>
+            <div class="size">${formatSize(e.size)} · ${e.pageCount} পেজ</div>
+          </div>
+          <button class="icon-btn" data-remove aria-label="সরিয়ে ফেলুন">&times;</button>
+        </div>
+        <div class="actions-row">
+          <button class="action-btn ${e.panelOpen && e.panelType === 'delete' ? 'open' : ''}" data-toggle-delete>পেজ ডিলিট করুন</button>
+          <button class="action-btn skip-btn ${e.panelOpen && e.panelType === 'settings' ? 'open' : ''}" data-toggle-skip>Next process</button>
+        </div>
+        <div class="panel ${e.panelOpen ? 'open' : ''}">${panelBody}`;
+
+      li.querySelector('[data-remove]').addEventListener('click', () => removeFile(e.id));
+      li.querySelector('[data-toggle-delete]').addEventListener('click', () => togglePanel(e.id, 'delete'));
+      
+      const singleColBtn = li.querySelector('[data-toggle-single]');
+      if (singleColBtn) {
+        singleColBtn.addEventListener('click', () => toggleSingleColumn(e.id));
+      }
+
+      li.querySelectorAll('[data-toggle-skip]').forEach(btn => {
+        btn.addEventListener('click', () => togglePanel(e.id, 'settings'));
+      });
+
+      const printBtn = li.querySelector('[data-print]');
+      if (printBtn) printBtn.addEventListener('click', () => printPdf(e.id));
+
+      const invertCheckbox = li.querySelector('[data-invert]');
+      if (invertCheckbox) {
+        invertCheckbox.addEventListener('change', (evt) => toggleInvert(e.id, evt.target.checked));
+      }
+
+      const pagenumCheckbox = li.querySelector('[data-pagenum]');
+      if (pagenumCheckbox) {
+        pagenumCheckbox.addEventListener('change', (evt) => toggleAddPageNumbers(e.id, evt.target.checked));
+      }
+
+      li.querySelectorAll('[data-setting]').forEach(sel => {
+        sel.addEventListener('change', (evt) => {
+          updateSetting(e.id, evt.target.dataset.setting, evt.target.value);
+        });
+      });
+
+      li.querySelectorAll('[data-mode]').forEach(btn => {
+        btn.addEventListener('click', () => setDeleteMode(e.id, btn.dataset.mode));
+      });
+
+      const applyNumBtn = li.querySelector('[data-apply-num]');
+      if (applyNumBtn) {
+        applyNumBtn.addEventListener('click', () => {
+          const inputVal = li.querySelector(`#numInput_${e.id}`).value;
+          deleteByPageNumbers(e.id, inputVal);
+        });
+      }
+
+      li.querySelectorAll('[data-trash]').forEach(btn => {
+        btn.addEventListener('click', () => deletePage(e.id, parseInt(btn.dataset.trash, 10)));
+      });
+
+      fileList.appendChild(li);
+    });
+  }
+</script>
+
+</body>
+</html>

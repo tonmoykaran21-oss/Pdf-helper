@@ -201,6 +201,7 @@
 
   .panel-label { font-size: 13px; color: var(--ink-soft); margin-bottom: 8px; }
 
+  /* লেআউট টগল বাটন স্টাইল */
   .layout-toggle-btn {
     width: 100%;
     background: #EFEADF;
@@ -251,6 +252,7 @@
     padding-right: 4px;
   }
   
+  /* ১টি করে পেজ দেখানোর ক্লাস */
   .page-grid.single-col {
     grid-template-columns: 1fr;
   }
@@ -502,7 +504,7 @@
       thumbnails: new Map(),
       thumbLoading: false,
       thumbProgress: 0,
-      singleColumnView: false,
+      singleColumnView: false, // ১টি করে পেজ দেখার স্টেট
       panelOpen: false,
       panelType: null,
       deleteMode: 'visual',
@@ -597,6 +599,7 @@
     render();
   }
 
+  // ১টি করে পেজ দেখানোর অপশন টগল করার ফাংশন
   function toggleSingleColumn(id) {
     const e = entries.find(x => x.id === id);
     if (e) {
@@ -733,8 +736,8 @@
       const mmVal = parseFloat(e.pageSpacing) || 0.5;
       const gap = mmVal * 2.83;
 
-      const renderScale = (e.imageQuality === 'high') ? 2.0 : 1.2;
-      const jpegQuality = (e.imageQuality === 'high') ? 0.95 : 0.8;
+      const renderScale = (e.imageQuality === 'high') ? 2.5 : 1.5;
+      const jpegQuality = (e.imageQuality === 'high') ? 1.0 : 0.85;
 
       let numberFont = null;
       if (e.addPageNumbers) {
@@ -837,11 +840,11 @@
           const sheetCanvas = document.createElement('canvas');
           
           if (e.orientation === 'landscape') {
-            sheetCanvas.width = 2400;
-            sheetCanvas.height = 1700;
-          } else {
-            sheetCanvas.width = 1700;
+            sheetCanvas.width = 3300;
             sheetCanvas.height = 2400;
+          } else {
+            sheetCanvas.width = 2400;
+            sheetCanvas.height = 3300;
           }
 
           const sCtx = sheetCanvas.getContext('2d');
@@ -894,7 +897,7 @@
 
             if (e.pageBorder === 'yes') {
               ctx.strokeStyle = '#000000';
-              ctx.lineWidth = 4;
+              ctx.lineWidth = 6;
               ctx.strokeRect(0, 0, canvas.width, canvas.height);
             }
 

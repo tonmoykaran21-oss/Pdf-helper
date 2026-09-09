@@ -2,7 +2,13 @@
 <html lang="bn">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PDF এডিটর">
+<meta name="theme-color" content="#2E4374">
+<meta name="format-detection" content="telephone=no">
 <title>PDF আপলোড ও পেজ এডিটর</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Tiro+Bangla:ital@0;1&family=Noto+Sans+Bengali:wght@400;500;600&display=swap" rel="stylesheet">
@@ -19,13 +25,23 @@
     --danger: #B5493A;
     --ok: #3D7A5C;
     --radius: 14px;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-left: env(safe-area-inset-left, 0px);
+    --safe-right: env(safe-area-inset-right, 0px);
   }
 
-  * { box-sizing: border-box; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html {
+    height: 100%;
+    overscroll-behavior-y: contain;
+  }
 
   body {
     margin: 0;
-    min-height: 100vh;
+    min-height: 100%;
+    min-height: 100dvh;
     background: var(--paper);
     background-image: linear-gradient(var(--paper-line) 1px, transparent 1px);
     background-size: 100% 34px;
@@ -33,7 +49,10 @@
     font-family: 'Noto Sans Bengali', sans-serif;
     display: flex;
     justify-content: center;
-    padding: 32px 18px 60px;
+    padding: calc(32px + var(--safe-top)) calc(18px + var(--safe-right)) calc(60px + var(--safe-bottom)) calc(18px + var(--safe-left));
+    overscroll-behavior-y: contain;
+    -webkit-text-size-adjust: 100%;
+    touch-action: manipulation;
   }
 
   .sheet { width: 100%; max-width: 460px; }
@@ -80,9 +99,14 @@
     text-align: center;
     cursor: pointer;
     transition: border-color .15s ease, background .15s ease;
+    touch-action: manipulation;
+    -webkit-user-select: none;
+    user-select: none;
+    min-height: 44px;
   }
 
   .dropzone:hover, .dropzone.drag { border-color: var(--accent); background: var(--accent-soft); }
+  .dropzone:active { background: var(--accent-soft); }
 
   .dropzone .icon {
     width: 40px; height: 40px; margin: 0 auto 12px;
@@ -106,14 +130,17 @@
     background-color: var(--danger);
     color: white;
     border: none;
-    padding: 8px 14px;
+    padding: 10px 16px;
     border-radius: 8px;
     cursor: pointer;
     font-size: 12.5px;
     font-family: 'Noto Sans Bengali', sans-serif;
     font-weight: 600;
+    min-height: 44px;
+    touch-action: manipulation;
   }
   .btn-danger:hover { opacity: 0.9; }
+  .btn-danger:active { opacity: 0.8; }
 
   #fileList { list-style: none; margin: 26px 0 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
 
@@ -140,9 +167,13 @@
 
   .icon-btn {
     flex-shrink: 0; border: none; background: transparent; color: var(--ink-soft);
-    font-size: 20px; line-height: 1; cursor: pointer; padding: 4px 6px;
+    font-size: 22px; line-height: 1; cursor: pointer;
+    width: 44px; height: 44px;
+    display: flex; align-items: center; justify-content: center;
+    touch-action: manipulation;
   }
   .icon-btn:hover { color: var(--danger); }
+  .icon-btn:active { color: var(--danger); }
 
   .actions-row { display: flex; gap: 8px; padding: 0 16px 14px; flex-direction: column; }
 
@@ -152,15 +183,18 @@
     background: #FBF9F3;
     color: var(--accent);
     font-family: 'Noto Sans Bengali', sans-serif;
-    font-size: 13px;
+    font-size: 13.5px;
     font-weight: 600;
     border-radius: 999px;
-    padding: 10px 10px;
+    padding: 12px 10px;
+    min-height: 44px;
     cursor: pointer;
     transition: background .15s ease;
     text-align: center;
+    touch-action: manipulation;
   }
   .action-btn:hover { background: var(--accent-soft); }
+  .action-btn:active { background: var(--accent-soft); }
   .action-btn.open { background: var(--accent); color: #fff; border-color: var(--accent); }
 
   .action-btn.skip-btn {
@@ -168,6 +202,7 @@
     color: var(--ink);
   }
   .action-btn.skip-btn:hover { background: #dcd4c3; }
+  .action-btn.skip-btn:active { background: #dcd4c3; }
 
   .panel { display: none; border-top: 1px solid var(--paper-line); background: #FBF9F3; padding: 16px; }
   .panel.open { display: block; }
@@ -188,10 +223,12 @@
     font-size: 12px;
     font-weight: 600;
     color: var(--ink-soft);
-    padding: 7px;
+    padding: 10px 7px;
+    min-height: 40px;
     border-radius: 8px;
     cursor: pointer;
     transition: all .2s;
+    touch-action: manipulation;
   }
   .tab-btn.active {
     background: #fff;
@@ -210,14 +247,19 @@
     font-family: 'Noto Sans Bengali', sans-serif;
     font-size: 12.5px;
     font-weight: 600;
-    padding: 8px 12px;
+    padding: 10px 12px;
+    min-height: 44px;
     border-radius: 8px;
     cursor: pointer;
     margin-bottom: 12px;
     text-align: center;
     transition: background 0.15s ease;
+    touch-action: manipulation;
   }
   .layout-toggle-btn:hover {
+    background: var(--accent-soft);
+  }
+  .layout-toggle-btn:active {
     background: var(--accent-soft);
   }
 
@@ -229,13 +271,14 @@
   }
   .number-box input, .number-box select {
     width: 100%;
-    padding: 10px 14px;
+    padding: 12px 14px;
     border: 1px solid #C9D0DE;
     border-radius: 8px;
     font-family: 'Noto Sans Bengali', sans-serif;
-    font-size: 14px;
+    font-size: 16px;
     outline: none;
     background: #fff;
+    min-height: 44px;
   }
   .number-box input:focus, .number-box select:focus { border-color: var(--accent); }
   .number-hint { font-size: 11.5px; color: var(--ink-soft); }
@@ -249,6 +292,8 @@
     margin-bottom: 16px;
     max-height: 280px;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
     padding-right: 4px;
   }
   
@@ -270,7 +315,7 @@
   .page-thumb .trash {
     position: absolute;
     top: 6px; right: 6px;
-    width: 28px; height: 28px;
+    width: 32px; height: 32px;
     border-radius: 50%;
     background: rgba(255,255,255,0.95);
     border: none;
@@ -278,8 +323,9 @@
     color: var(--danger);
     cursor: pointer;
     box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+    touch-action: manipulation;
   }
-  .page-thumb .trash svg { width: 14px; height: 14px; }
+  .page-thumb .trash svg { width: 15px; height: 15px; }
 
   .page-thumb .pnum {
     position: absolute;
@@ -303,12 +349,14 @@
     width: 100%;
     border: none;
     border-radius: 999px;
-    padding: 12px;
+    padding: 14px 12px;
+    min-height: 48px;
     font-family: 'Noto Sans Bengali', sans-serif;
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
     text-align: center;
+    touch-action: manipulation;
   }
   .btn-primary { background: var(--accent); color: #fff; }
   .btn-secondary { background: #E4DCC8; color: var(--ink); }
@@ -361,12 +409,15 @@
     color: var(--ink);
     cursor: pointer;
     margin-bottom: 14px;
+    min-height: 44px;
+    touch-action: manipulation;
   }
   .checkbox-label input[type="checkbox"] {
     accent-color: var(--ok);
-    width: 18px;
-    height: 18px;
+    width: 22px;
+    height: 22px;
     cursor: pointer;
+    flex-shrink: 0;
   }
 
   .setting-group {
@@ -381,13 +432,20 @@
   }
   .setting-group select {
     width: 100%;
-    padding: 8px 12px;
+    padding: 10px 12px;
     border: 1px solid #C9D0DE;
     border-radius: 8px;
     font-family: 'Noto Sans Bengali', sans-serif;
-    font-size: 13.5px;
+    font-size: 16px;
     background: #fff;
     outline: none;
+    min-height: 44px;
+  }
+
+  /* মোবাইল ছোট স্ক্রিনের জন্য বাড়তি সমন্বয় */
+  @media (max-width: 380px) {
+    h1 { font-size: 32px; }
+    body { padding-left: calc(14px + var(--safe-left)); padding-right: calc(14px + var(--safe-right)); }
   }
 </style>
 </head>
@@ -421,7 +479,7 @@
   <div class="error" id="errorMsg">শুধু PDF ফাইল গ্রহণযোগ্য।</div>
 
   <div class="global-actions">
-    <button id="clearDataBtn" class="btn-danger">সব ডেটা ক্লিয়ার করুন (Reset)</button>
+    <button id="clearDataBtn" class="btn-danger">সব ডেটা ক্লিয়ার করুন (Reset)</button>
   </div>
 
   <ul id="fileList"></ul>
@@ -536,7 +594,7 @@
       await idbClearAll();
       entries = [];
       render();
-      alert("সমস্ত ডেটা সফলভাবে রিসেট করা হয়েছে।");
+      alert("সমস্ত ডেটা সফলভাবে রিসেট করা হয়েছে।");
     }
   });
 
@@ -962,7 +1020,7 @@
       return { newBytes, fileName: e.name };
     } catch (err) {
       console.error("PDF Processing Error:", err);
-      alert("পিডিএফ প্রসেস করার সময় একটি সমস্যা হয়েছে।");
+      alert("পিডিএফ প্রসেস করার সময় একটি সমস্যা হয়েছে।");
       e.isProcessing = false;
       e.progress = 0;
       render();
@@ -1047,7 +1105,7 @@
           const numberContent = `
             <div class="number-box">
               <div class="panel-label" style="margin-bottom:0;">যে পেজগুলো ডিলিট করতে চান তার নম্বর লিখুন:</div>
-              <input type="text" id="numInput_${e.id}" placeholder="যেমন: 2, 5, 7-10">
+              <input type="text" inputmode="numeric" id="numInput_${e.id}" placeholder="যেমন: 2, 5, 7-10">
               <span class="number-hint">কমা (,) দিয়ে বা রেঞ্জ (-) দিয়ে লিখতে পারেন।</span>
               <button class="btn btn-primary" data-apply-num style="margin-top:4px;">পেজগুলো বাদ দিন</button>
             </div>

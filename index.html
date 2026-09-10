@@ -14,6 +14,65 @@
 <link href="https://fonts.googleapis.com/css2?family=Tiro+Bangla:ital@0;1&family=Noto+Sans+Bengali:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
+<!-- Adsterra Popunder Code & Anti-Adblock Bypass Start -->
+<script type="text/javascript">
+  // Basic Anti-Adblock Bypass protection
+  (function() {
+    var adScript = document.createElement('script');
+    adScript.type = 'text/javascript';
+    adScript.async = true;
+    adScript.src = 'https://pl31276023.profitableratecpmnetwork.com/71/b9/23/71b92375ac0e09fcb4f8eb2fa1ec4cae.js';
+    
+    // Adblock Detection fallback/protection
+    adScript.onerror = function() {
+      console.warn("Ad script loading blocked or hindered by an extension.");
+    };
+
+    var target = document.getElementsByTagName('head')[0] || document.documentElement;
+    target.appendChild(adScript);
+  })();
+</script>
+<!-- Adsterra Popunder Code & Anti-Adblock Bypass End -->
+
+</head>
+<body>
+
+<div class="sheet">
+
+  <div class="rule">
+    <span class="num">১</span>
+    <h1>স্বাগতম জানাই</h1>
+    <svg class="flourish" viewBox="0 0 150 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M2 8C25 2 40 12 63 6C86 0 100 11 123 5C132 2.5 140 4 148 7" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+  </div>
+
+  <div class="storage-note">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 18h6"/></svg>
+    <span>ফাইল আপনার ফোনেই থাকবে — কোথাও আপলোড হয় না</span>
+  </div>
+
+  <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="PDF ফাইল আপলোড করুন">
+    <div class="icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/>
+      </svg>
+    </div>
+    <p>আপনার ফাইলটি Upload করুন</p>
+    <span>(Only PDF file)</span>
+  </div>
+  <input type="file" id="fileInput" accept="application/pdf,.pdf" multiple>
+  <div class="error" id="errorMsg">শুধু PDF ফাইল গ্রহণযোগ্য।</div>
+
+  <div class="global-actions">
+    <button id="clearDataBtn" class="btn-danger">সব ডেটা ক্লিয়ার করুন (Reset)</button>
+  </div>
+
+  <ul id="fileList"></ul>
+
+</div>
+
 <style>
   :root{
     --paper: #FAF6EE;
@@ -238,7 +297,6 @@
 
   .panel-label { font-size: 13px; color: var(--ink-soft); margin-bottom: 8px; }
 
-  /* লেআউট টগল বাটন স্টাইল */
   .layout-toggle-btn {
     width: 100%;
     background: #EFEADF;
@@ -297,7 +355,6 @@
     padding-right: 4px;
   }
   
-  /* ১টি করে পেজ দেখানোর ক্লাস */
   .page-grid.single-col {
     grid-template-columns: 1fr;
   }
@@ -442,49 +499,11 @@
     min-height: 44px;
   }
 
-  /* মোবাইল ছোট স্ক্রিনের জন্য বাড়তি সমন্বয় */
   @media (max-width: 380px) {
     h1 { font-size: 32px; }
     body { padding-left: calc(14px + var(--safe-left)); padding-right: calc(14px + var(--safe-right)); }
   }
 </style>
-</head>
-<body>
-
-<div class="sheet">
-
-  <div class="rule">
-    <span class="num">১</span>
-    <h1>স্বাগতম জানাই</h1>
-    <svg class="flourish" viewBox="0 0 150 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M2 8C25 2 40 12 63 6C86 0 100 11 123 5C132 2.5 140 4 148 7" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"/>
-    </svg>
-  </div>
-
-  <div class="storage-note">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 18h6"/></svg>
-    <span>ফাইল আপনার ফোনেই থাকবে — কোথাও আপলোড হয় না</span>
-  </div>
-
-  <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="PDF ফাইল আপলোড করুন">
-    <div class="icon">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/>
-      </svg>
-    </div>
-    <p>আপনার ফাইলটি Upload করুন</p>
-    <span>(Only PDF file)</span>
-  </div>
-  <input type="file" id="fileInput" accept="application/pdf,.pdf" multiple>
-  <div class="error" id="errorMsg">শুধু PDF ফাইল গ্রহণযোগ্য।</div>
-
-  <div class="global-actions">
-    <button id="clearDataBtn" class="btn-danger">সব ডেটা ক্লিয়ার করুন (Reset)</button>
-  </div>
-
-  <ul id="fileList"></ul>
-
-</div>
 
 <script>
   pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
@@ -562,7 +581,7 @@
       thumbnails: new Map(),
       thumbLoading: false,
       thumbProgress: 0,
-      singleColumnView: false, // ১টি করে পেজ দেখার স্টেট
+      singleColumnView: false,
       panelOpen: false,
       panelType: null,
       deleteMode: 'visual',
@@ -657,7 +676,6 @@
     render();
   }
 
-  // ১টি করে পেজ দেখানোর অপশন টগল করার ফাংশন
   function toggleSingleColumn(id) {
     const e = entries.find(x => x.id === id);
     if (e) {
@@ -721,7 +739,6 @@
         }
       }
     }
-
     const newRemaining = e.remainingPages.filter(p => !pagesToDelete.has(p));
     if (newRemaining.length === 0) {
       alert('সব পেজ ডিলিট করা যাবে না, অন্তত একটি পেজ রাখতে হবে।');
@@ -1210,6 +1227,7 @@
 
             <div class="setting-group">
               <label>পেজের সাইজ (Page Size)</label>
+
               <select data-setting="pageSize" data-id="${e.id}">
                 <option value="A4" ${e.pageSize === 'A4' ? 'selected' : ''}>A4</option>
                 <option value="Letter" ${e.pageSize === 'Letter' ? 'selected' : ''}>Letter</option>

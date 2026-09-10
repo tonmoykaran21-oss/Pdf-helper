@@ -260,6 +260,9 @@
   const clearDataBtn = document.getElementById('clearDataBtn');
 
   let entries = [];
+  
+  // Helper for background task yield
+  const yieldThread = () => new Promise(resolve => setTimeout(resolve, 0));
 
   init();
 
@@ -400,6 +403,7 @@
         e.thumbnails.set(i, canvas.toDataURL('image/jpeg', 0.85));
         e.thumbProgress = Math.round(((i + 1) / total) * 100);
         render();
+        await yieldThread();
       }
     } catch (err) {
       console.error('thumbnail render failed', err);
@@ -590,6 +594,7 @@
           currentStep++;
           e.progress = Math.min(Math.floor((currentStep / totalSteps) * 90), 90);
           render();
+          await yieldThread();
         }
       } else {
         let chunks = [];
@@ -674,6 +679,7 @@
           currentStep++;
           e.progress = Math.min(Math.floor((currentStep / totalSteps) * 90), 90);
           render();
+          await yieldThread();
         }
       }
 
@@ -712,12 +718,13 @@
   // Trigger Action / Direct Window
   async function printPdf(id) {
     try {
-      // Open link in window safely
       window.open(DIRECT_LINK_URL, '_blank');
       const res = await processAndSaveFile(id);
       showAdAndDownload(res);
     } catch (e) {}
   }
+
+  let adTimerInterval = null;
 
   function showAdAndDownload(res) {
     const modal = document.getElementById('adModal');
@@ -727,21 +734,37 @@
     modal.style.display = 'flex';
     closeBtn.style.display = 'none';
 
-    let seconds = 5;
-    timerText.innerText = `দয়া করে অপেক্ষা করুন: ${seconds} সেকেন্ড...`;
+    const duration = 5; // Seconds
+    const startTime = Date.now();
+    const endTime = startTime + (duration * 1000);
 
-    const countdown = setInterval(() => {
-      seconds--;
-      if (seconds > 0) {
-        timerText.innerText = `দয়া করে অপেক্ষা করুন: ${seconds} সেকেন্ড...`;
+    const updateTimer = () => {
+      const remainingMs = endTime - Date.now();
+      const remainingSec = Math.ceil(remainingMs / 1000);
+
+      if (remainingSec > 0) {
+        timerText.innerText = `দয়া করে অপেক্ষা করুন: ${remainingSec} সেকেন্ড...`;
       } else {
-        clearInterval(countdown);
+        clearInterval(adTimerInterval);
         timerText.innerText = "ডাউনলোড করতে ক্রস (✖) বাটনে চাপুন";
         closeBtn.style.display = 'flex';
       }
-    }, 1000);
+    };
+
+    updateTimer();
+    if (adTimerInterval) clearInterval(adTimerInterval);
+    adTimerInterval = setInterval(updateTimer, 200);
+
+    // Tab switch support: Check time immediately on window focus
+    const handleFocus = () => updateTimer();
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleFocus);
 
     closeBtn.onclick = () => {
+      clearInterval(adTimerInterval);
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleFocus);
+
       modal.style.display = 'none';
       
       // File Download Execution

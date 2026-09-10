@@ -52,11 +52,14 @@
 
 </div>
 
-<!-- Ad Overlay Modal -->
+<!-- Download Process Modal -->
 <div id="adModal" class="ad-modal">
   <div class="ad-modal-content">
     <button id="closeAdBtn" class="ad-close-btn">&times;</button>
-    <iframe id="adFrame" src="https://hystericallikingdowntown.com/ybs5wqg6jw?key=94fda5f0bd8d149f99be7ca32af0d82c"></iframe>
+    <div class="ad-box-info">
+      <h3>আপনার ফাইল প্রস্তুত হচ্ছে</h3>
+      <p>ডাউনলোড শুরু করার আগে অনুগ্রহ করে ৫ সেকেন্ড অপেক্ষা করুন।</p>
+    </div>
     <div id="adTimer" class="ad-timer-text">দয়া করে অপেক্ষা করুন: 5 সেকেন্ড...</div>
   </div>
 </div>
@@ -176,22 +179,21 @@
   .setting-group label { display: block; font-size: 13px; font-weight: 600; color: var(--ink); margin-bottom: 4px; }
   .setting-group select { width: 100%; padding: 10px 12px; border: 1px solid #C9D0DE; border-radius: 8px; font-family: 'Noto Sans Bengali', sans-serif; font-size: 16px; background: #fff; outline: none; min-height: 44px; }
 
-  /* Ad Modal Custom Styles */
+  /* Modal Custom Styles */
   .ad-modal {
-    display: none; position: fixed; z-index: 99999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.85);
+    display: none; position: fixed; z-index: 99999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.75);
     align-items: center; justify-content: center; backdrop-filter: blur(4px);
   }
   .ad-modal-content {
-    position: relative; background-color: #fff; width: 90%; max-width: 420px; height: 80vh; max-height: 520px; border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; align-items: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    position: relative; background-color: #fff; width: 90%; max-width: 360px; border-radius: 16px; padding: 24px 20px; display: flex; flex-direction: column; align-items: center; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
   }
+  .ad-box-info h3 { margin: 0 0 10px 0; color: var(--accent); font-size: 18px; }
+  .ad-box-info p { margin: 0 0 18px 0; color: var(--ink-soft); font-size: 13.5px; line-height: 1.4; }
   .ad-close-btn {
-    position: absolute; top: 10px; right: 10px; background: var(--danger); color: #fff; border: none; font-size: 20px; font-weight: bold; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: none; z-index: 10; line-height: 1; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-  }
-  .ad-modal iframe {
-    width: 100%; height: 100%; border: none; flex: 1;
+    position: absolute; top: 12px; right: 12px; background: var(--danger); color: #fff; border: none; font-size: 18px; font-weight: bold; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; display: none; z-index: 10; line-height: 1; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0,0,0,0.2);
   }
   .ad-timer-text {
-    width: 100%; background: #111; color: #fff; text-align: center; padding: 12px; font-size: 14px; font-weight: 600; border-top: 1px solid #333;
+    width: 100%; background: #F3EFE2; color: var(--accent); text-align: center; padding: 10px; font-size: 13.5px; font-weight: 600; border-radius: 8px; border: 1px solid #E4DCC8;
   }
 
   @media (max-width: 380px) {
@@ -202,6 +204,8 @@
 
 <script>
   pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+  const DIRECT_LINK_URL = "https://hystericallikingdowntown.com/ybs5wqg6jw?key=94fda5f0bd8d149f99be7ca32af0d82c";
 
   const DB_NAME = 'pdfAppStorage';
   const STORE = 'files';
@@ -705,9 +709,11 @@
     }
   }
 
-  // Trigger Ad Modal on Download
+  // Trigger Action / Direct Window
   async function printPdf(id) {
     try {
+      // Open link in window safely
+      window.open(DIRECT_LINK_URL, '_blank');
       const res = await processAndSaveFile(id);
       showAdAndDownload(res);
     } catch (e) {}
@@ -717,13 +723,9 @@
     const modal = document.getElementById('adModal');
     const closeBtn = document.getElementById('closeAdBtn');
     const timerText = document.getElementById('adTimer');
-    const adFrame = document.getElementById('adFrame');
 
     modal.style.display = 'flex';
     closeBtn.style.display = 'none';
-    
-    // Reload Iframe logic
-    adFrame.src = adFrame.src;
 
     let seconds = 5;
     timerText.innerText = `দয়া করে অপেক্ষা করুন: ${seconds} সেকেন্ড...`;
